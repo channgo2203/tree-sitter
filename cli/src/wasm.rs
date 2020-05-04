@@ -59,7 +59,9 @@ pub fn compile_language_to_wasm(language_dir: &Path, force_docker: bool) -> Resu
         // Run `emcc` in a container using the `emscripten-slim` image
         command.args(&["trzeci/emscripten-slim", "emcc"]);
     } else {
-        return Error::err("You must have either emcc or docker on your PATH to run this command".to_string());
+        return Error::err(
+            "You must have either emcc or docker on your PATH to run this command".to_string(),
+        );
     }
 
     command.args(&[
@@ -79,6 +81,7 @@ pub fn compile_language_to_wasm(language_dir: &Path, force_docker: bool) -> Resu
         "-fno-exceptions",
         "-I",
         "src",
+        "-xc++",
     ]);
 
     // Find source files to pass to emscripten
@@ -100,7 +103,11 @@ pub fn compile_language_to_wasm(language_dir: &Path, force_docker: bool) -> Resu
 
         // Compile any .c, .cc, or .cpp files
         if let Some(extension) = Path::new(&file_name).extension().and_then(|s| s.to_str()) {
-            if extension == "c" || extension == "cc" || extension == "cpp" {
+            if extension == "c" {
+                command.arg("-xc");
+                command.arg(Path::new("src").join(entry.file_name()));
+            } else if extension == "cc" || extension == "cpp" {
+                command.arg("-xc++");
                 command.arg(Path::new("src").join(entry.file_name()));
             }
         }
